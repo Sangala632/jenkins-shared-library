@@ -5,7 +5,7 @@ def call(Map configMap){
         }
         environment { 
             COURSE = 'jenkins'
-            greeting = configMap.get('greeting')
+            greeting = configMap.get('Name')
         }
         options {
             timeout(time: 30, unit: 'MINUTES') 
