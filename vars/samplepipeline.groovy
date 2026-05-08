@@ -49,7 +49,7 @@ def call(Map configMap){
                 echo 'Hello Success'
             }
             failure { 
-                echo 'Hello Failure'
+                echo 'Hello Failure !'
             }
         }
     }
