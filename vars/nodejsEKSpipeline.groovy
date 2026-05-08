@@ -1,3 +1,192 @@
-def call(Map configMap){
-hi
+def call(){
+    pipeline {
+        agent {
+            label 'agent-1'
+        } 
+        environment {
+            appVersion = ""
+            REGION = "us-east-1"
+            ACC_ID = "838180513114"
+            PROJECT = "roboshop"
+            COMPONENT = "catalogue"
+        }
+        options {
+            timeout(time: 30, unit: 'MINUTES') 
+            disableConcurrentBuilds()
+        }
+        parameters {
+            booleanParam(name: 'deploy', defaultValue: false, description: 'Toggle this value')
+        }
+        // Reading the application version from package.json
+        stages {
+            stage('Read package.json') {
+                steps {
+                    script {
+                        def packageJson = readJSON file: 'package.json'
+                        appVersion = packageJson.version
+                        echo "package.json version ${appVersion}"
+                    }
+                }
+            }
+            // Installing all required node modules and dependencies
+            stage('Install Dependencies') {
+                steps {
+                    script {
+                        sh """
+                            npm install
+                        """
+                    }
+                }
+            }
+            // Running unit tests to validate the application code
+            stage('Unit Testing') {
+                steps {
+                    script {
+                        sh """
+                            echo "unit tests"
+                        """
+                    }
+                }
+            }
+            // Scanning source code using SonarQube to find bugs, code smells and security issues
+        /*  stage('Sonar scan') {
+                environment {
+                    scannerHome = tool 'sonarqube-8.0'
+                }
+                steps {
+                    script {
+                        withSonarQubeEnv(installationName:'sonarqube-8.0') { // 'My SonarQube Server' is the installationName
+                            sh "${scannerHome}/bin/sonar-scanner"
+                        }
+                    }
+                }
+            }
+            // Waiting for SonarQube quality gate result and failing the pipeline if quality gate fails
+            // Note: enable webhook in SonarQube server to send results back to Jenkins
+            // enable webhook in sonarqube server and wait for result
+            stage("Quality Gate") {
+                steps {
+                    timeout(time: 1, unit: 'HOURS') {
+                    waitForQualityGate abortPipeline: true }
+                }
+            } */
+            // Checking Dependabot alerts to fail the pipeline if any HIGH and CRITICAL vulnerabilities are found
+            stage('Check Dependabot Alerts') {
+                steps {
+                    withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+                        script {
+                            def response = sh(
+                                script: """
+                                    curl -s -H "Accept: application/vnd.github+json" \
+                                        -H "Authorization: token ${GITHUB_TOKEN}" \
+                                        https://api.github.com/repos/sangala632/catalogue/dependabot/alerts
+                                """,
+                                returnStdout: true
+                            ).trim()
+
+                            def json = readJSON text: response
+
+                            def criticalOrHigh = json.findAll { alert ->
+                                def severity = alert?.security_advisory?.severity?.toLowerCase()
+                                def state = alert?.state?.toLowerCase()
+                                return (state == "open" && (severity == "critical" || severity == "high"))
+                            }
+
+                            if (criticalOrHigh.size() > 0) {
+                                error "❌ Found ${criticalOrHigh.size()} HIGH/CRITICAL Dependabot alerts. Failing pipeline!"
+                            } else {
+                                echo "✅ No HIGH/CRITICAL Dependabot alerts found."
+                            }
+                        }
+                    }
+                }
+            }
+            // Building Docker image and pushing it to AWS ECR
+            stage('Docker Build') {
+                steps {
+                    script {
+                        withAWS(credentials: 'aws-creds', region: "${REGION}") {
+                            sh """
+                                aws ecr get-login-password --region ${REGION} | \
+                                docker login --username AWS --password-stdin ${ACC_ID}.dkr.ecr.${REGION}.amazonaws.com
+
+                                docker build --provenance=false -t ${ACC_ID}.dkr.ecr.${REGION}.amazonaws.com/${PROJECT}/${COMPONENT}:${appVersion} .
+                                docker push ${ACC_ID}.dkr.ecr.${REGION}.amazonaws.com/${PROJECT}/${COMPONENT}:${appVersion}
+                                docker rmi ${ACC_ID}.dkr.ecr.${REGION}.amazonaws.com/${PROJECT}/${COMPONENT}:${appVersion}
+                            """
+                        }
+                    }
+                }
+            }
+            // Scanning Docker image in ECR to fail the pipeline if any HIGH and CRITICAL vulnerabilities are found
+            stage('Check ECR Scan Results') {
+                steps {
+                    script {
+                        withAWS(credentials: 'aws-creds', region: 'us-east-1') {
+
+                            sleep(time: 45, unit: 'SECONDS')
+
+                            // Fetch scan findings
+                            def findings = sh(
+                                script: """
+                                    aws ecr describe-image-scan-findings \
+                                    --repository-name ${PROJECT}/${COMPONENT} \
+                                    --image-id imageTag=${appVersion} \
+                                    --region ${REGION} \
+                                    --output json
+                                """,
+                                returnStdout: true
+                            ).trim()
+
+                            // Parse JSON
+                            def json = readJSON text: findings
+                            def highCritical = json.imageScanFindings.findings.findAll {
+                                it.severity == "HIGH" || it.severity == "CRITICAL"
+                            }
+
+                            if (highCritical.size() > 0) {
+                                echo "❌ Found ${highCritical.size()} HIGH/CRITICAL vulnerabilities!"
+                                currentBuild.result = 'FAILURE'
+                                error("Build failed due to vulnerabilities")
+                            } else {
+                                echo "✅ No HIGH/CRITICAL vulnerabilities found."
+                            }
+                        }
+                    }
+                }
+            }
+            // Triggering the deployment pipeline to deploy the application to dev environment
+            stage('Trigger Deploy') {
+                when {
+                expression { params.deploy }
+                }
+                steps {
+                    build job: 'catalogue-cd',
+                    parameters: [
+                        string(name: 'appVersion', value: "${appVersion}"),
+                        string(name: 'deploy_to', value: 'dev')
+                    ],
+                    wait: false, // VPC will not wait for SG pipeline completion
+                    propagate: false // even SG fails VPC will not be effected
+                }
+
+            }
+        }
+
+        post { 
+            always { 
+                echo 'I will always say Hello again!'
+            }
+
+            success { 
+                echo 'If success say ..I will always say Hello again!'
+            }
+
+            
+            failure { 
+                echo 'If failure say ..I will always say stage is failure!'
+            }
+        }
+
+    }
 }
