@@ -1,4 +1,4 @@
-def call(){
+def call(configMap){
     pipeline {
         agent {
             label 'agent-1'
@@ -7,8 +7,8 @@ def call(){
             appVersion = ""
             REGION = "us-east-1"
             ACC_ID = "838180513114"
-            PROJECT = "roboshop"
-            COMPONENT = "catalogue"
+            PROJECT = configMap.get('PROJECT')
+            COMPONENT = configMap.get('COMPONENT')
         }
         options {
             timeout(time: 30, unit: 'MINUTES') 
