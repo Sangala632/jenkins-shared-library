@@ -22,7 +22,8 @@ def call(configMap){
             stage('Read pom.xml') {
                 steps {
                     script {
-                        appVersion = readMavenPom().getVersion()
+                        def pom = readMavenPom()
+                        appVersion = pom.getVersion()
                         echo "app version: ${appVersion}"
                     }
                 }
