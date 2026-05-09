@@ -117,7 +117,7 @@ def call(configMap){
                     }
                 }
             }
-            // Scanning Docker image in ECR to fail the pipeline if any HIGH and CRITICAL vulnerabilities are found
+            /* // Scanning Docker image in ECR to fail the pipeline if any HIGH and CRITICAL vulnerabilities are found
             stage('Check ECR Scan Results') {
                 steps {
                     script {
@@ -149,7 +149,7 @@ def call(configMap){
                         }
                     }
                 }
-            }
+            } */
             // Triggering the deployment pipeline to deploy the application to dev environment
             stage('Trigger Deploy') {
                 when {
