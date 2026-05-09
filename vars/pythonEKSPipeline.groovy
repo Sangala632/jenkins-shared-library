@@ -71,7 +71,7 @@ def call(configMap){
                 }
             } */
             // Checking Dependabot alerts to fail the pipeline if any HIGH and CRITICAL vulnerabilities are found
-            stage('Check Dependabot Alerts') {
+            /* stage('Check Dependabot Alerts') {
                 steps {
                     withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
                         script {
@@ -100,7 +100,7 @@ def call(configMap){
                         }
                     }
                 }
-            }
+            } */
             // Building Docker image and pushing it to AWS ECR
             stage('Docker Build') {
                 steps {

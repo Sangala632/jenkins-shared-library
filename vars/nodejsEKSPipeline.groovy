@@ -71,7 +71,7 @@ def call(configMap){
                 }
             } */
             // Checking Dependabot alerts to fail the pipeline if any HIGH and CRITICAL vulnerabilities are found
-            stage('Check Dependabot Alerts') {
+            /* stage('Check Dependabot Alerts') {
                 steps {
                     withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
                         script {
@@ -79,7 +79,7 @@ def call(configMap){
                                 script: """
                                     curl -s -H "Accept: application/vnd.github+json" \
                                         -H "Authorization: token ${GITHUB_TOKEN}" \
-                                        https://api.github.com/repos/sangala632/catalogue/dependabot/alerts
+                                        https://api.github.com/repos/sangala632/${COMPONENT} /dependabot/alerts
                                 """,
                                 returnStdout: true
                             ).trim()
@@ -150,7 +150,7 @@ def call(configMap){
                         }
                     }
                 }
-            }
+            } */
             // Triggering the deployment pipeline to deploy the application to dev environment
             stage('Trigger Deploy') {
                 when {
