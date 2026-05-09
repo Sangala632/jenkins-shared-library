@@ -19,10 +19,9 @@ def call(configMap){
         }
         // Reading the application version from package.json
         stages {
-            stage('Read package.json') {
+            stage('Read Version') {
                 steps {
                     script {
-                        
                         appVersion = readFile('version').trim()
                         echo "app Version: ${appVersion}"
                     }
