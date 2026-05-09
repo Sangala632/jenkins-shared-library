@@ -100,7 +100,7 @@ def call(configMap){
                         }
                     }
                 }
-            }
+            }*/
             // Building Docker image and pushing it to AWS ECR
             stage('Docker Build') {
                 steps {
@@ -118,8 +118,9 @@ def call(configMap){
                     }
                 }
             }
+
             // Scanning Docker image in ECR to fail the pipeline if any HIGH and CRITICAL vulnerabilities are found
-            stage('Check ECR Scan Results') {
+            /* stage('Check ECR Scan Results') {
                 steps {
                     script {
                         withAWS(credentials: 'aws-creds', region: 'us-east-1') {
@@ -150,7 +151,7 @@ def call(configMap){
                         }
                     }
                 }
-            } */
+            }  */
             // Triggering the deployment pipeline to deploy the application to dev environment
             stage('Trigger Deploy') {
                 when {
