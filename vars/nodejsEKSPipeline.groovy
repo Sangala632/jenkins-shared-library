@@ -41,15 +41,19 @@ def call(configMap){
             // Running unit tests to validate the application code
             stage('Unit Testing') {
                 steps {
-                    script {
-                        sh """
-                            echo "unit tests"
-                        """
+                    script{
+                        def testResult = sh(script: 'npm test', returnStatus: true)
+                        if (testResult != 0) {
+                            utils.updateCommitStatus('failure', 'Unit tests failed', 'unit-tests')
+                            error "Unit tests failed."
+                        } else {
+                            utils.updateCommitStatus('success', 'Unit tests passed', 'unit-tests')
+                        }
                     }
                 }
             }
             // Scanning source code using SonarQube to find bugs, code smells and security issues
-        /*  stage('Sonar scan') {
+            stage('Sonar scan') {
                 environment {
                     scannerHome = tool 'sonarqube-8.0'
                 }
@@ -69,9 +73,9 @@ def call(configMap){
                     timeout(time: 1, unit: 'HOURS') {
                     waitForQualityGate abortPipeline: true }
                 }
-            } */
+            } 
             // Checking Dependabot alerts to fail the pipeline if any HIGH and CRITICAL vulnerabilities are found
-            /* stage('Check Dependabot Alerts') {
+            stage('Check Dependabot Alerts') {
                 steps {
                     withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
                         script {
@@ -100,7 +104,7 @@ def call(configMap){
                         }
                     }
                 }
-            }*/
+            }
             // Building Docker image and pushing it to AWS ECR
             stage('Docker Build') {
                 steps {
@@ -119,9 +123,84 @@ def call(configMap){
                     }
                 }
             }
+            /* stage('Trivy OS Scan') {
+                steps {
+                    script {
+                        // Generate table report
+                        sh """
+                            trivy image \
+                                --scanners vuln \
+                                --pkg-types os \
+                                --severity HIGH,MEDIUM \
+                                --format table \
+                                --output trivy-os-report.txt \
+                                --exit-code 0 \
+                                ${acc_id}.dkr.ecr.${region}.amazonaws.com/${project}/${component}:${appVersion}
+                        """
+
+                        // Print table to console
+                        sh 'cat trivy-os-report.txt'
+
+                        // Fail pipeline if vulnerabilities found
+                        def scanResult = sh(
+                            script: """
+                                trivy image \
+                                    --scanners vuln \
+                                    --pkg-types os \
+                                    --severity HIGH,MEDIUM \
+                                    --format table \
+                                    --exit-code 1 \
+                                    --quiet \
+                                    ${acc_id}.dkr.ecr.${region}.amazonaws.com/${project}/${component}:${appVersion}
+                            """,
+                            returnStatus: true
+                        )
+
+                        if (scanResult != 0) {
+                            utils.updateCommitStatus('failure', 'Trivy OS scan: HIGH/MEDIUM vulnerabilities found', 'trivy-scan')
+                            error "🚨 Trivy found HIGH/MEDIUM OS vulnerabilities. Pipeline failed."
+                        } else {
+                            utils.updateCommitStatus('success', 'Trivy OS scan passed — no HIGH/MEDIUM vulnerabilities', 'trivy-scan')
+                            echo "✅ No HIGH or MEDIUM OS vulnerabilities found. Pipeline continues."
+                        }
+                    }
+                }
+            }
+            stage('Trivy Dockerfile Scan'){
+                steps {
+                    script {
+                        sh """
+                            trivy config \
+                                --severity HIGH,MEDIUM \
+                                --format table \
+                                --output trivy-dockerfile-report.txt \
+                                Dockerfile
+                        """
+
+                        sh 'cat trivy-dockerfile-report.txt'
+
+                        def scanResult = sh(
+                            script: """
+                                trivy config \
+                                    --severity HIGH,MEDIUM \
+                                    --exit-code 1 \
+                                    --format table \
+                                    Dockerfile
+                            """,
+                            returnStatus: true
+                        )
+
+                        if (scanResult != 0) {
+                            error "🚨 Trivy found HIGH/MEDIUM misconfigurations in Dockerfile. Pipeline failed."
+                        } else {
+                            echo "✅ No HIGH or MEDIUM Dockerfile misconfigurations found. Pipeline continues."
+                        }
+                    }
+                }
+            } */
 
             // Scanning Docker image in ECR to fail the pipeline if any HIGH and CRITICAL vulnerabilities are found
-            /* stage('Check ECR Scan Results') {
+            stage('Check ECR Scan Results') {
                 steps {
                     script {
                         withAWS(credentials: 'aws-creds', region: 'us-east-1') {
@@ -152,7 +231,7 @@ def call(configMap){
                         }
                     }
                 }
-            }  */
+            } 
             // Triggering the deployment pipeline to deploy the application to dev environment
             stage('Trigger Deploy') {
                 when {

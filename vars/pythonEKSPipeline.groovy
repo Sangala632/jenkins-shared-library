@@ -41,14 +41,18 @@ def call(configMap){
             stage('Unit Testing') {
                 steps {
                     script {
-                        sh """
-                            echo "unit tests"
-                        """
+                        def testResult = sh(script: 'pytest --tb=short -q', returnStatus: true)
+                        if (testResult != 0) {
+                            utils.updateCommitStatus('failure', 'Unit tests failed', 'unit-tests')
+                            error "Unit tests failed."
+                        } else {
+                            utils.updateCommitStatus('success', 'Unit tests passed', 'unit-tests')
+                        }
                     }
                 }
             }
             // Scanning source code using SonarQube to find bugs, code smells and security issues
-        /*  stage('Sonar scan') {
+         stage('Sonar scan') {
                 environment {
                     scannerHome = tool 'sonarqube-8.0'
                 }
@@ -68,9 +72,9 @@ def call(configMap){
                     timeout(time: 1, unit: 'HOURS') {
                     waitForQualityGate abortPipeline: true }
                 }
-            } */
+            } 
             // Checking Dependabot alerts to fail the pipeline if any HIGH and CRITICAL vulnerabilities are found
-            /* stage('Check Dependabot Alerts') {
+            stage('Check Dependabot Alerts') {
                 steps {
                     withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
                         script {
@@ -99,7 +103,7 @@ def call(configMap){
                         }
                     }
                 }
-            } */
+            }
             // Building Docker image and pushing it to AWS ECR
             stage('Docker Build') {
                 steps {
@@ -118,7 +122,7 @@ def call(configMap){
                     }
                 }
             }
-            /* // Scanning Docker image in ECR to fail the pipeline if any HIGH and CRITICAL vulnerabilities are found
+            // Scanning Docker image in ECR to fail the pipeline if any HIGH and CRITICAL vulnerabilities are found
             stage('Check ECR Scan Results') {
                 steps {
                     script {
