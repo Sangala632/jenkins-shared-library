@@ -19,6 +19,11 @@ def call(configMap){
         }
         // Reading the application version from package.json
         stages {
+            stage('Clean Workspace') {
+                steps {
+                    cleanWs()
+                }
+            }
             stage('Read package.json') {
                 steps {
                     script {
@@ -251,20 +256,19 @@ def call(configMap){
             }
         }
 
-        post { 
-            always { 
+        post {
+            always {
                 echo 'I will always say Hello again!'
+                cleanWs(deleteDirs: true, notFailBuild: true)
             }
 
-            success { 
+            success {
                 echo 'If success say ..I will always say Hello again!'
             }
 
-            
-            failure { 
+            failure {
                 echo 'If failure say ..I will always say stage is failure!'
             }
         }
-
     }
 }
