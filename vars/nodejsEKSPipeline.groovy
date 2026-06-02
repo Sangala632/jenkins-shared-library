@@ -28,7 +28,7 @@ def call(configMap){
             stage('Checkout') {
                 steps {
                     git branch: "${env.BRANCH_NAME}",
-                    url: 'https://github.com/Sangala632/catalogue-ci.git'
+                    url: "https://github.com/Sangala632/${COMPONENT}-ci.git"
                 }
             }
             stage('Read package.json') {
