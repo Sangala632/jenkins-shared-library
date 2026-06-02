@@ -13,6 +13,7 @@ def call(configMap){
         options {
             timeout(time: 30, unit: 'MINUTES') 
             disableConcurrentBuilds()
+            skipDefaultCheckout()
         }
         parameters {
             booleanParam(name: 'deploy', defaultValue: false, description: 'Toggle this value')
@@ -22,6 +23,12 @@ def call(configMap){
             stage('Clean Workspace') {
                 steps {
                     cleanWs()
+                }
+            }
+            stage('Checkout') {
+                steps {
+                    git branch: "${env.BRANCH_NAME}",
+                    url: 'https://github.com/Sangala632/catalogue-ci.git'
                 }
             }
             stage('Read package.json') {
