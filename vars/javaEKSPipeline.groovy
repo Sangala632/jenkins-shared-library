@@ -32,6 +32,8 @@ def call(configMap){
             }
             stage('Read pom.xml') {
                 steps {
+                    sh 'pwd'
+                    sh 'ls -ltr'
                     script {
                         def pom = readMavenPom()
                         appVersion = pom.getVersion()
