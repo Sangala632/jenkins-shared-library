@@ -165,7 +165,7 @@ def call(configMap){
                         }
                     }
                 }
-            } */
+            } 
             // Triggering the deployment pipeline to deploy the application to dev environment
             stage('Trigger Deploy') {
                 when {
