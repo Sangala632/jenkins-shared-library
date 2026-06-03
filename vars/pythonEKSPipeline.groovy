@@ -54,10 +54,10 @@ def call(configMap){
                     script {
                         def testResult = sh(script: 'pytest --tb=short -q', returnStatus: true)
                         if (testResult != 0) {
-                            utils.updateCommitStatus('failure', 'Unit tests failed', 'unit-tests')
+                            //utils.updateCommitStatus('failure', 'Unit tests failed', 'unit-tests')
                             error "Unit tests failed."
                         } else {
-                            utils.updateCommitStatus('success', 'Unit tests passed', 'unit-tests')
+                            //utils.updateCommitStatus('success', 'Unit tests passed', 'unit-tests')
                         }
                     }
                 }
