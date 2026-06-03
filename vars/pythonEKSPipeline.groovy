@@ -24,6 +24,12 @@ def call(configMap){
                     cleanWs()
                 }
             }
+            stage('Checkout') {
+                steps {
+                    git branch: "${env.BRANCH_NAME}",
+                    url: "https://github.com/Sangala632/${COMPONENT}-ci.git"
+                }
+            }
             stage('Read Version') {
                 steps {
                     script {
