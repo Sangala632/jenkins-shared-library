@@ -43,7 +43,8 @@ def call(configMap){
                 steps {
                     script {
                         sh """
-                            pip3 install -r requirements.txt    
+                            pip3 install -r requirements.txt 
+                            pytest --tb=short -q   
                         """
                     }
                 }
