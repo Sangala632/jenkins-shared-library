@@ -94,7 +94,7 @@ def call(configMap){
                                 script: """
                                     curl -s -H "Accept: application/vnd.github+json" \
                                         -H "Authorization: token ${GITHUB_TOKEN}" \
-                                        https://api.github.com/repos/sangala632/${COMPONENT}/dependabot/alerts
+                                        https://api.github.com/repos/sangala632/${COMPONENT}-ci/dependabot/alerts
                                 """,
                                 returnStdout: true
                             ).trim()
@@ -174,13 +174,15 @@ def call(configMap){
                 }
                 steps {
                     //build job: '../catalogue-cd',
-                    build job: "../${COMPONENT}-cd" ,
+                    build (
+                    job: "../${COMPONENT}-cd" ,
                     parameters: [
                         string(name: 'appVersion', value: "${appVersion}"),
                         string(name: 'deploy_to', value: 'dev')
                     ],
                     wait: false, // VPC will not wait for SG pipeline completion
                     propagate: false // even SG fails VPC will not be effected
+                    )
                 }
 
             }
