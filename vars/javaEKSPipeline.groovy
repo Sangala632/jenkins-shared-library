@@ -57,10 +57,10 @@ def call(configMap){
                     script {
                         def testResult = sh(script: 'mvn test', returnStatus: true)
                         if (testResult != 0) {
-                            utils.updateCommitStatus('failure', 'Unit tests failed', 'unit-tests')
+                            updateCommitStatus('failure', 'Unit tests failed', 'unit-tests')
                             error "Unit tests failed."
                         } else {
-                            utils.updateCommitStatus('success', 'Unit tests passed', 'unit-tests')
+                            updateCommitStatus('success', 'Unit tests passed', 'unit-tests')
                         }
                     }
                 }
